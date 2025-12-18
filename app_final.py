@@ -9,11 +9,12 @@ st.set_page_config(
 )
 
 st.title("Physics Wikipedia Articles: Subfield Classification & Analysis")
-tab_intro, tab_features, tab_results, tab_viz = st.tabs([
+tab_intro, tab_features, tab_results, tab_viz, tab_sum = st.tabs([
     "📘 Introduction & Data Summary",
     "🧠 New Features & Text Classification",
     "📊 Results",
-    "📈 Visualizations & Summary"
+    "📈 Visualizations",
+    "🗒 Summary"
 ])
 
 with tab_intro:
@@ -42,7 +43,8 @@ with tab_intro:
     st.header("Data Summary")
 
     st.markdown("""
-    **Data source:**  
+    **Data source**: [WikiProject Physics](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Physics#Current_status_of_physics_articles)
+      
     - Wikipedia Physics Project articles and pageview data from **3/7/23–12/30/24**
     - Total Number of Articles: **28391**
     - Articles that got views in 2023-2024: **4762**
@@ -147,12 +149,22 @@ with tab_results:
     Since the data spans a two-year period (2023–2024), we compare subfields
     visually rather than using hypothesis testing with p-values.
     """)
-    st.markdown("""Overall, we can see that mathematical concepts get the most views. However, some subfields such as relativity get relatively more views
-                compared to their proportion of total articles. On the other hand, some fields like optics, get lower views compared to their proportion. """)
+    st.markdown("""If we limit the catagories to pure physics subfields (exclude other, physicist, mathematical concepts, and technology), 
+                we can see that particle physics has the most articles and the most views. However, some subfields such as relativity get relatively more views
+                compared to their proportion of total articles, as seen between fig. 1 and 2. On the other hand, some fields like optics, 
+                get lower views compared to their proportion. 
+                
+                 
+                """)
+    st.markdown("""This could be due to how many intro level ideas a subfield has. Subfields with high pageview to article ratios (Fig. 1 vs Fig. 3), like Astronomy and planetary,
+                atomic, molecular, and optics, and relativity, can have more popular basic ideas, such as the Sun, elements, and the universe respectively. Something like optics,
+                with a low pageview to articles ratio, has less entry-level ideas.""")
 
     
     exclude_other = st.checkbox("Exclude 'Other' subclass  ")
     exclude_physicist = st.checkbox("Exclude 'Physicist' subclass  ")
+    exclude_math = st.checkbox("Exclude 'Mathematical Concept' subclass  ")
+    exclude_tech = st.checkbox("Exclude 'Technology' subclass  ")
 
     filtered_articles = df.copy()
 
@@ -166,8 +178,18 @@ with tab_results:
             filtered_articles["ground_truth_subclass"] != "Physicist"
         ]
 
+    if exclude_math:
+        filtered_articles = filtered_articles[
+            filtered_articles["ground_truth_subclass"] != "Mathematical Concept"
+        ]
+
+    if exclude_tech:
+        filtered_articles = filtered_articles[
+            filtered_articles["ground_truth_subclass"] != "Technology"
+        ]
+
   
-    st.subheader("Proportion of Articles by Subfield (Ground Truth)")
+    st.subheader("Fig. 1: Proportion of Articles by Subfield (Ground Truth)")
 
     article_props = (
         filtered_articles["ground_truth_subclass"]
@@ -203,8 +225,16 @@ with tab_results:
             merged_views["ground_truth_subclass"] != "Physicist"
         ]
 
+    if exclude_math:
+        merged_views = merged_views[
+            merged_views["ground_truth_subclass"] != "Mathematical Concept"
+        ]
+    if exclude_tech:
+        merged_views = merged_views[
+            merged_views["ground_truth_subclass"] != "Technology"
+        ]
     
-    st.subheader("Total Pageviews by Subfield (2023–2024)")
+    st.subheader("Fig. 2: Total Pageviews by Subfield (2023–2024)")
 
     views_by_subfield = (
         merged_views
@@ -216,7 +246,7 @@ with tab_results:
     st.bar_chart(views_by_subfield)
 
     views_by_subfield_prop = views_by_subfield / views_by_subfield.sum()
-    st.subheader("Proportion of Total Pageviews by Subfield (2023–2024)")
+    st.subheader("Fig. 3: Proportion of Total Pageviews by Subfield (2023–2024)")
     st.markdown(""" This shows the *share of total physics-related pageviews* attributed to each subfield over the 2023–2024 period.""")
 
 
@@ -230,16 +260,6 @@ with tab_results:
 
 with tab_viz:
     st.header("Interactive Exploration")
-    
-    selected_subfield = st.selectbox(
-        "Select a physics subfield:",
-        (df["ground_truth_subclass"].unique())
-    )
-
-    filtered = df[df["ground_truth_subclass"] == selected_subfield]
-
-    st.write(f"Articles in **{selected_subfield}**:")
-    st.dataframe(filtered[["label", "description"]])
 
     st.header("Daily Total Pageviews 2023-2024")
 
@@ -258,6 +278,21 @@ with tab_viz:
     )
 
     st.altair_chart(daily_chart, use_container_width=True)
+    
+    st.subheader("Browse Articles in a subfield")
+
+    
+    selected_subfield = st.selectbox(
+        "Select a physics subfield:",
+        (df["ground_truth_subclass"].unique())
+    )
+
+    filtered = df[df["ground_truth_subclass"] == selected_subfield]
+
+    st.write(f"Articles in **{selected_subfield}**:")
+    st.dataframe(filtered[["label", "description"]])
+
+    
 
     pageviews_df = pd.read_csv("physics_pageviews.csv", parse_dates=["date"])
     articles_df = pd.read_csv("articles_with_predictions.csv")
@@ -331,7 +366,7 @@ with tab_viz:
 
 
 
-
+with tab_sum:
 
 
     st.header("Summary, Limitations")
